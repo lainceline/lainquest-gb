@@ -1,4 +1,5 @@
 ; main.asm
+
 ; Include other assembly files
 INCLUDE "src/graphics.asm"
 INCLUDE "src/input.asm"
@@ -9,6 +10,7 @@ INCLUDE "src/maps.asm"
 SECTION "Header", ROM0[$0100]
 ; Entry point
     jp Start
+    nop
 
 SECTION "Logo", ROM0[$0104]
 ; Nintendo logo (must match exactly for Game Boy to run the cartridge)
@@ -22,31 +24,31 @@ SECTION "Logo", ROM0[$0104]
 SECTION "Header Information", ROM0[$0134]
 ; Game title (11 characters)
     db "GB RPG DEMO"
-    db " "  ; Padding to ensure 16 bytes total for the title
+    db " " ; Padding to ensure 16 bytes total for the title
 ; Manufacturer code (4 characters)
     db "0000"
 ; CGB flag
-    db $80                ; Supports CGB functions, but works on old Game Boys
+    db $80 ; Supports CGB functions, but works on old Game Boys
 ; New licensee code (2 characters)
-    db $33                ; Super Game Boy functions
+    db $33 ; Backward compatibility
 ; SGB flag
-    db $03
+    db $03 ; Super Game Boy functions
 ; Cartridge type
-    db $00
+    db $00 ; ROM only
 ; ROM size
-    db $00
+    db $00 ; 32KB ROM
 ; RAM size
-    db $00
+    db $00 ; No external RAM
 ; Destination code
-    db $00
+    db $00 ; Japanese
 ; Old licensee code
-    db $00
+    db $00 ; Use new licensee code
 ; Mask ROM version number
-    db $00
-; Header checksum (calculated later)
-    db $00
-; Global checksum (calculated later)
-    dw $0000
+    db $00 ; Version 1.0
+; Header checksum
+    db $00 ; Header checksum (calculated later)
+; Global checksum
+    dw $0000 ; Global checksum (calculated later)
 
 SECTION "Main", ROM0[$0150]
 Start:
@@ -69,15 +71,70 @@ MainLoop:
     jp MainLoop
 
 Init:
-    ; Initialize graphics
+    ; Turn the LCD off
+    ld a, $00
+    ldh [$FF40], a
+
+    ; Load graphics
     call LoadGraphics
+
+    ; Set up the background tile map
+    call SetBackgroundTiles
+
+    ; Turn the LCD on
+    ld a, $91       ; $91 = 10010001 in binary (LCD on, BG on)
+    ldh [$FF40], a
+
+    ; Initialize sprite position
+    ld hl, SpriteXPosition
+    ld [hl], $80   ; Starting X position
+    inc hl
+    ld [hl], $80   ; Starting Y position
+
     ; TODO: Add other hardware initialization code here
     ret
 
 Update:
-    ; TODO: Add game update logic here (e.g., handling input, updating game state, etc.)
+    ; Update game state
+    call ReadInput
+
+    ; Get button state
+    ld a, [ButtonState]
+
+    ; Example: Move a sprite based on input
+    ; Assume HL points to the sprite's X position in memory
+    ld hl, SpriteXPosition  ; Load sprite X position address into HL
+
+    bit 5, a  ; Check if LEFT button is pressed (bit 5)
+    jr z, CheckRight
+    dec [hl]       ; Move left if left button pressed
+CheckRight:
+    bit 4, a  ; Check if RIGHT button is pressed (bit 4)
+    jr z, CheckUp
+    inc [hl]       ; Move right if right button pressed
+CheckUp:
+    bit 6, a  ; Check if UP button is pressed (bit 6)
+    jr z, CheckDown
+    inc hl         ; Point to Y position
+    dec [hl]       ; Move up if up button pressed
+    dec hl         ; Point back to X position
+CheckDown:
+    bit 7, a  ; Check if DOWN button is pressed (bit 7)
+    jr z, EndUpdate
+    inc hl         ; Point to Y position
+    inc [hl]       ; Move down if down button pressed
+    dec hl         ; Point back to X position
+
+EndUpdate:
     ret
 
 Draw:
-    ; TODO: Add drawing logic here (e.g., rendering sprites, backgrounds, etc.)
+    ; Draw graphics
+    call DrawGraphics
     ret
+
+SECTION "Game Data", WRAM0
+SpriteXPosition:
+    ds 1  ; Reserve 1 byte for storing sprite X position
+SpriteYPosition:
+    ds 1  ; Reserve 1 byte for storing sprite Y position

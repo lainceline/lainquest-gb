@@ -1,14 +1,14 @@
 ; input.asm
 
 ; Define button masks
-BTN_A      EQU $01
-BTN_B      EQU $02
-BTN_SELECT EQU $04
-BTN_START  EQU $08
-BTN_RIGHT  EQU $10
-BTN_LEFT   EQU $20
-BTN_UP     EQU $40
-BTN_DOWN   EQU $80
+DEF BTN_A      EQU $01
+DEF BTN_B      EQU $02
+DEF BTN_SELECT EQU $04
+DEF BTN_START  EQU $08
+DEF BTN_RIGHT  EQU $10
+DEF BTN_LEFT   EQU $20
+DEF BTN_UP     EQU $40
+DEF BTN_DOWN   EQU $80
 
 ; Section for input code in ROM
 SECTION "Input Code", ROM0

@@ -5,17 +5,36 @@ SECTION "Graphics Data", ROM0
 
 ; Example tile data (16 bytes per 8x8 tile)
 TileData:
-    db $00, $00, $FF, $FF, $FF, $FF, $FF, $FF
-    db $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF
+    ; Tile 0: Empty tile (all 0s)
+    db $00, $00, $00, $00, $00, $00, $00, $00
+    db $00, $00, $00, $00, $00, $00, $00, $00
+    
+    ; Tile 1: Checkerboard pattern
+    db $FF, $00, $FF, $00, $FF, $00, $FF, $00
+    db $FF, $00, $FF, $00, $FF, $00, $FF, $00
+
+; Example background tile map (32x32 tiles)
+BackgroundMap:
+    rept 32 * 32
+    db $01  ; Use the checkerboard tile
+    endr
 
 ; Section for graphics code in ROM
 SECTION "Graphics Code", ROM0
 
 LoadGraphics:
-    ; Set up for DMA transfer to load tile data into VRAM
+    ; Load tile data into VRAM
     ld hl, TileData        ; Source address (in ROM)
     ld de, $8000           ; Destination address (VRAM)
-    ld bc, 16              ; Number of bytes to transfer
+    ld bc, 32              ; Number of bytes to transfer (2 tiles * 16 bytes each)
+    call DmaTransfer
+    ret
+
+SetBackgroundTiles:
+    ; Load background map data into VRAM
+    ld hl, BackgroundMap   ; Source address (in ROM)
+    ld de, $9800           ; Destination address (BG Map in VRAM)
+    ld bc, 32 * 32         ; Number of bytes to transfer (32x32 tiles)
     call DmaTransfer
     ret
 
@@ -39,13 +58,4 @@ CopyLoop:
 
 DrawGraphics:
     ; Draw background and sprites
-    ; TODO: Add code to draw graphics on the screen
-    ret
-
-DrawBackground:
-    ; TODO: Add code to draw the background
-    ret
-
-DrawSprites:
-    ; TODO: Add code to draw sprites
     ret
